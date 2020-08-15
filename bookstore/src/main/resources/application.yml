@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: bookstore
+  datasource:
+    name: demo_db
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://{0}:{1}/demo_db
+    username: ${db.user-id}
+    password: ${db.user-pass}
+    testOnBorrow: true
+    validationQuery: SELECT 1
+    timeBetweenEvictionRunsMillis: 5000 #should be a higher value in production
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+server:
+  port: 8080
+
+configuration:
+  sd-enabled: true
+  sd-host: localhost
+  sd-port: 16000
+  sd-path: /eureka
+  db-service-name: sidecar-postgres
+  db-connection-retry-gap-seconds: 5
+  db-connection-max-retries: 20
+  media-conerage-api: https://jsonplaceholder.typicode.com/posts
+  profile: demo
+
+
+hystrix:
+  command:
+    default:
+      circuitBreaker:
+        enabled: true
+        requestVolumeThreshold: 10
+        errorThresholdPercentage: 70
+        sleepWindowInMilliseconds: 5000
+  threadpool:
+    default:
+      maximumSize: 20
+      maxQueueSize: 10
+ribbon:
+  ConnectTimeout: 3000
+  ReadTimeout: 2000
+
+eureka:
+  client:
+    registerWithEureka: false
+    fetchRegistry: true
+    serviceUrl:
+      defaultZone: http://${configuration.sd-host}:${configuration.sd-port}${configuration.sd-path}

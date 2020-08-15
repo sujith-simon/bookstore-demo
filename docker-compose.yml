@@ -1,0 +1,54 @@
+version: '3.4'
+services:
+  service-discovery:
+    build:
+      context: ./docker/
+      dockerfile: service-discovery/Dockerfile
+    environment:
+      APP_JAR: service-discovery.jar
+      APP_ARGS: --server.port=8080
+    volumes:
+      - ./service-discovery/target/:/opt/spring-application/
+    ports:
+      - "16000:8080"
+      - "17000:9090"
+    networks:
+      - demo-network
+
+  sidecar-postgres:
+    build:
+      context: ./docker/
+      dockerfile: sidecar-postgres/Dockerfile
+    environment:
+      APP_JAR: sidecar-postgres.jar
+      APP_ARGS: --server.port=8080 --configuration.sd-host=service-discovery --configuration.sd-port=8080 --postgres.user=postgres --sidecar.hostname=sidecar-postgres
+    volumes:
+      - ./sidecar-postgres/target/:/opt/spring-application/
+    ports:
+      - "16001:8080"
+      - "16002:5432"
+      - "17001:9090"
+    depends_on:
+      - service-discovery
+    networks:
+      - demo-network
+
+  bookstore:
+    build:
+      context: ./docker/
+      dockerfile: bookstore/Dockerfile
+    environment:
+      APP_JAR: bookstore.jar
+      APP_ARGS: --server.port=8080 --configuration.sd-host=service-discovery --configuration.sd-port=8080 --db.user-id=demo --db.user-pass=demo123
+    volumes:
+      - ./bookstore/target/:/opt/spring-application/
+    ports:
+      - "16003:8080"
+      - "17003:9090"
+    depends_on:
+      - service-discovery
+    networks:
+      - demo-network
+
+networks:
+  demo-network:
